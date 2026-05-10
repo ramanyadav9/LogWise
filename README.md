@@ -2,8 +2,6 @@
 
 An AI-powered log intelligence TUI for files, Docker, and stdin — packaged so any developer can `pip install logwise` and start triaging logs in seconds.
 
-> **Status:** v0.1.0a1 alpha. W1 ships the core TUI: file/stdin tail with colored rows. AI features land in W3–W4.
-
 ## What it does today (W1)
 
 - Tails a log file or stdin and renders lines in a live, color-coded Textual TUI.
@@ -38,14 +36,6 @@ tail -f /var/log/syslog | uv run logwise
 ```
 
 Press `q` to quit.
-
-## Roadmap
-
-- W2: format-aware parsers, Docker source, stats bar
-- W3: LiteLLM integration, AI explain panel (press `E` on a line)
-- W4: NL filter, anomaly detection, journald
-- W5: search, multi-file panes, snapshot tests
-- W6: PyPI publish, GitHub Actions CI
 
 ## Development
 
