@@ -64,7 +64,7 @@ wheels = [
 
 [[package]]
 name = "logwise"
-version = "0.1.0a1"
+version = "0.2.0a1"
 source = { editable = "." }
 dependencies = [
     { name = "aiofiles" },

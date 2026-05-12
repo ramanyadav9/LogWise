@@ -1,6 +1,6 @@
 [project]
 name = "logwise"
-version = "0.1.0a1"
+version = "0.2.0a1"
 description = "AI-powered log intelligence TUI for files, Docker, and stdin"
 readme = "README.md"
 requires-python = ">=3.11"

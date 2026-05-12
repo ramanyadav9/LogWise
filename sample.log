@@ -1,0 +1,50 @@
+2026-05-09 14:32:01 INFO  startup: logwise demo service v1.4.2 booting
+2026-05-09 14:32:01 INFO  config: loaded /etc/app/config.yaml
+2026-05-09 14:32:01 DEBUG config: 14 keys parsed
+2026-05-09 14:32:02 INFO  db: connecting to postgres://prod-db:5432/orders
+2026-05-09 14:32:02 INFO  db: connection pool initialized (size=10)
+2026-05-09 14:32:02 INFO  cache: redis cluster reachable at redis-0,redis-1,redis-2
+2026-05-09 14:32:03 INFO  http: listening on :8080
+2026-05-09 14:32:08 DEBUG http: GET /healthz 200 1ms
+2026-05-09 14:32:11 INFO  http: GET /api/v1/orders 200 47ms user_id=ec3b5
+2026-05-09 14:32:14 WARN  cache: miss rate 38% over last 60s, consider warming
+{"ts":"2026-05-09T14:32:15Z","level":"info","msg":"order created","order_id":"d02b8","amount":4900}
+{"ts":"2026-05-09T14:32:17Z","level":"info","msg":"order created","order_id":"c2d9c","amount":1299}
+2026-05-09 14:32:19 INFO  http: POST /api/v1/checkout 200 89ms
+2026-05-09 14:32:22 WARN  db: slow query 1.2s SELECT * FROM orders WHERE user_id=ec3b5
+2026-05-09 14:32:24 WARNING http: 429 too many requests from 10.0.4.18
+2026-05-09 14:32:27 INFO  http: GET /api/v1/orders 200 31ms user_id=a91f0
+2026-05-09 14:32:30 ERROR db: timeout waiting for connection from pool after 30s
+2026-05-09 14:32:30 ERROR http: POST /api/v1/checkout 500 30002ms — db connection pool exhausted
+2026-05-09 14:32:31 ERROR db: timeout waiting for connection from pool after 30s
+2026-05-09 14:32:31 ERROR http: POST /api/v1/checkout 500 30001ms — db connection pool exhausted
+2026-05-09 14:32:33 ERROR db: timeout waiting for connection from pool after 30s
+{"ts":"2026-05-09T14:32:33Z","level":"error","msg":"payment gateway timeout","gateway":"stripe","order_id":"d02b8"}
+2026-05-09 14:32:34 DEBUG retry: scheduling retry attempt 1/3 for order d02b8 in 2s
+2026-05-09 14:32:35 ERROR http: POST /api/v1/refund 502 0ms — payment gateway unreachable
+2026-05-09 14:32:36 DEBUG retry: scheduling retry attempt 2/3 for order d02b8 in 4s
+2026-05-09 14:32:37 [ERROR] auth: signature verification failed for token eyJhbGciOi...
+2026-05-09 14:32:38 ERROR worker: unhandled exception in task process_refund
+Traceback (most recent call last):
+  File "/app/worker.py", line 142, in process_refund
+    gateway.refund(order_id, amount)
+  File "/app/gateways/stripe.py", line 88, in refund
+    response = self._client.post(url, json=payload, timeout=5)
+ConnectionError: connection refused: gateway.stripe.com:443
+2026-05-09 14:32:40 DEBUG retry: scheduling retry attempt 3/3 for order d02b8 in 8s
+2026-05-09 14:32:42 CRITICAL db: replication lag 42s exceeds threshold 10s
+2026-05-09 14:32:42 CRITICAL alertmanager: paging on-call for db-replication-lag
+2026-05-09 14:32:45 WARN  http: 429 too many requests from 10.0.4.18
+2026-05-09 14:32:48 ERROR http: POST /api/v1/checkout 500 30000ms — db connection pool exhausted
+2026-05-09 14:32:50 FATAL db: master node unreachable, failover required
+2026-05-09 14:32:50 FATAL supervisor: shutting down service to prevent data corruption
+2026-05-09 14:32:51 PANIC runtime: out of memory, aborting
+2026-05-09 14:32:52 INFO  systemd: service crashed, restart attempt 1/5
+2026-05-09 14:33:02 INFO  systemd: starting service
+2026-05-09 14:33:02 INFO  startup: logwise demo service v1.4.2 booting
+2026-05-09 14:33:03 INFO  db: connection pool initialized (size=10)
+2026-05-09 14:33:03 INFO  http: listening on :8080
+2026-05-09 14:33:08 DEBUG http: GET /healthz 200 1ms
+2026-05-09 14:33:14 INFO  http: GET /api/v1/orders 200 22ms
+2026-05-09 14:33:18 INFO  cache: warmed 1247 keys in 4.1s
+2026-05-09 14:33:21 INFO  service fully healthy

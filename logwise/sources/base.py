@@ -1,9 +1,9 @@
 """Abstract base class for log producers.
 
-Sources are async iterators of LogEntry. They have zero knowledge of the TUI —
-the consumer is just `async for entry in source.stream(): ...`. This keeps
-sources unit-testable headless and lets future modes (JSON output, web UI)
-reuse the same producers.
+In W2 the contract changed: sources yield raw line strings, not LogEntry.
+The Parser layer (logwise/parsers/) is responsible for turning those strings
+into LogEntry objects. This decouples line acquisition (sources' job) from
+line interpretation (parsers' job).
 """
 
 from __future__ import annotations
@@ -11,17 +11,14 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from collections.abc import AsyncIterator
 
-from logwise.core.log_entry import LogEntry
-
 
 class LogSource(ABC):
-    """A producer of LogEntry objects."""
+    """A producer of raw log lines as strings."""
 
     @abstractmethod
-    def stream(self) -> AsyncIterator[LogEntry]:
-        """Yield LogEntry objects until the underlying source is exhausted.
+    def stream(self) -> AsyncIterator[str]:
+        """Yield raw log lines (without trailing newline) until exhausted.
 
         Implementations should be cancellation-safe: when the consuming task
         is cancelled, any open file handles or pipes must close cleanly.
         """
-        ...
