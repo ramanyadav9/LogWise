@@ -1,4 +1,4 @@
-"""File-tailing source — polls a file with aiofiles and yields raw lines."""
+"""File-tailing source — brief-opens polling, no persistent file handle."""
 
 from __future__ import annotations
 
@@ -7,24 +7,26 @@ import os
 from collections.abc import AsyncIterator
 from pathlib import Path
 
-import aiofiles
-
 from logwise.sources.base import LogSource
 
 
 class FileSource(LogSource):
     """Reads a file from the start, then keeps tailing new appended lines.
 
-    Opens the file in stream() (not __init__), so missing-file errors surface
-    to the caller's async context. Reads existing content from byte 0 so the
-    user sees what's already in the file (the common "open this log and look
-    at it" case). After hitting EOF, polls every poll_interval seconds for
-    new lines. Handles truncation (file shrinks) by seeking back to byte 0;
-    rename-style rotation is a documented W1 limitation.
+    Uses a brief-opens strategy: opens the file each poll cycle, reads from
+    the last known byte position to current EOF, then closes. This:
 
-    For very large files, the downstream ring buffer caps the in-memory size
-    (default 10 000 lines), so the table shows the last N lines regardless of
-    file size — startup is still fast and bounded.
+    - Eliminates the Windows file-lock problem (the file handle exists only
+      for ~1ms per cycle, leaving a >99% window for other processes to open
+      the file for writing).
+    - Handles rename-style log rotation transparently (next poll opens by
+      path → gets the new file → its size is smaller than our tracked
+      position → we reset to 0 and read the new file from the start).
+    - Handles delete-then-recreate the same way, via FileNotFoundError.
+    - Handles truncation (`> log.txt`) the same way, via the size check.
+
+    Trade-off: ~10 open() calls per second per source. Negligible for local
+    log files; could matter on a slow network mount (not a W1.1 concern).
     """
 
     def __init__(self, path: Path, poll_interval: float = 0.1) -> None:
@@ -32,14 +34,26 @@ class FileSource(LogSource):
         self.poll = poll_interval
 
     async def stream(self) -> AsyncIterator[str]:
-        async with aiofiles.open(self.path, mode="r", errors="replace") as f:
-            while True:
-                line = await f.readline()
-                if line:
-                    yield line.rstrip("\n")
-                else:
-                    # Truncation check: file shrunk under us (e.g. `> log.txt`).
-                    pos = await f.tell()
-                    if pos > os.path.getsize(self.path):
-                        await f.seek(0)
-                    await asyncio.sleep(self.poll)
+        pos = 0  # byte offset into the current file
+        while True:
+            try:
+                with open(self.path, "r", errors="replace") as f:
+                    size = os.fstat(f.fileno()).st_size
+                    if size < pos:
+                        # File shrank under us — truncation or rotation.
+                        pos = 0
+                    f.seek(pos)
+                    while True:
+                        line = f.readline()
+                        if not line:
+                            break
+                        yield line.rstrip("\n")
+                    pos = f.tell()
+            except FileNotFoundError:
+                # File was renamed/deleted; it'll likely be recreated.
+                pos = 0
+            except PermissionError:
+                # Brief mid-rotation moment where the new file isn't readable
+                # yet. Keep polling — usually clears on the next cycle.
+                pass
+            await asyncio.sleep(self.poll)

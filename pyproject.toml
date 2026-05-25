@@ -1,6 +1,6 @@
 [project]
 name = "logwise"
-version = "0.2.0a1"
+version = "0.2.1a1"
 description = "AI-powered log intelligence TUI for files, Docker, and stdin"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -24,7 +24,6 @@ dependencies = [
     "typer>=0.12",
     "textual>=0.83",
     "rich>=13.7",
-    "aiofiles>=24.1",
 ]
 
 [project.optional-dependencies]

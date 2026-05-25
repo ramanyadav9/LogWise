@@ -2,7 +2,7 @@
 
 An AI-powered log intelligence TUI for files, Docker, and stdin — packaged so any developer can `pip install logwise` and start triaging logs in seconds.
 
-> **Status:** v0.2.0a1 alpha. W2a ships format-aware parsers on top of W1's core TUI. AI features land in W3.
+> **Status:** v0.2.1a1 alpha. W2a ships format-aware parsers on top of W1's core TUI. W1.1 polishes the source layer: Windows file-lock fixed, rename rotation handled, piped-stdin keyboard now works. AI features land in W3.
 
 ## What it does today
 
@@ -19,9 +19,6 @@ An AI-powered log intelligence TUI for files, Docker, and stdin — packaged so 
 
 - Auto-detection sniff window emits the first 10 lines via keyword-level fallback before locking the chosen parser; properly-parsed rendering kicks in from line 11. Use `--format json|nginx|plain` to skip the sniff.
 - Custom nginx log formats (non-combined) are not parsed; they fall back to keyword-level classification.
-- Rename-style log rotation (logrotate's default `create` mode) is not handled — restart logwise after rotation. (W1.1 polish.)
-- On Windows, the FileSource holds an exclusive read lock; external writers may fail to append while logwise tails. (W1.1 polish.)
-- Piping into logwise (`tail -f log | logwise`) traps keyboard input — use Ctrl+C to quit. (W1.1 polish.)
 - No AI yet. That's W3.
 
 ## Install
@@ -50,7 +47,6 @@ Press `q` to quit (when running in file mode; piped mode requires Ctrl+C).
 
 ## Roadmap
 
-- W1.1: file-locking + stdin-pipe-keyboard + rename-rotation polish
 - W2b: Docker source (logwise --docker my-container)
 - W2c: stats bar (events/sec, error % in last 60s)
 - W3: LiteLLM integration, AI explain panel (press E on a line)
@@ -61,7 +57,7 @@ Press `q` to quit (when running in file mode; piped mode requires Ctrl+C).
 ## Development
 
 ```bash
-uv run pytest         # 34 tests
+uv run pytest         # 39 tests
 uv run logwise --debug --file app.log    # writes logwise.debug.log
 ```
 
