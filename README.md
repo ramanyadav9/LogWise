@@ -2,7 +2,7 @@
 
 An AI-powered log intelligence TUI for files, Docker, and stdin — packaged so any developer can `pip install logwise` and start triaging logs in seconds.
 
-> **Status:** v0.2.1a1 alpha. W2a ships format-aware parsers on top of W1's core TUI. W1.1 polishes the source layer: Windows file-lock fixed, rename rotation handled, piped-stdin keyboard now works. AI features land in W3.
+> **Status:** v0.3.0a1 alpha. W2b adds Docker container log streaming. W2a ships format-aware parsers. W1.1 polishes the source layer. AI features land in W3.
 
 ## What it does today
 
@@ -38,6 +38,11 @@ uv run logwise --file app.log
 kubectl logs -f my-pod | uv run logwise
 tail -f /var/log/syslog | uv run logwise
 
+# tail a Docker container
+uv run logwise --docker my-container
+
+# (requires: pip install logwise[docker])
+
 # force a parser
 uv run logwise --format json --file app.log
 uv run logwise --format nginx --file access.log
@@ -47,7 +52,6 @@ Press `q` to quit (when running in file mode; piped mode requires Ctrl+C).
 
 ## Roadmap
 
-- W2b: Docker source (logwise --docker my-container)
 - W2c: stats bar (events/sec, error % in last 60s)
 - W3: LiteLLM integration, AI explain panel (press E on a line)
 - W4: NL filter, anomaly detection, journald
@@ -57,7 +61,7 @@ Press `q` to quit (when running in file mode; piped mode requires Ctrl+C).
 ## Development
 
 ```bash
-uv run pytest         # 39 tests
+uv run pytest         # 41 tests
 uv run logwise --debug --file app.log    # writes logwise.debug.log
 ```
 

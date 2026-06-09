@@ -157,7 +157,22 @@ def _restore_console_unix() -> None:
     os.close(tty_fd)
 
 
-def _pick_source(file: Path | None, pipe_tmp: Path | None) -> LogSource:
+def _make_docker_source(container: str) -> LogSource:
+    try:
+        from logwise.sources.docker_source import DockerSource
+    except ImportError:
+        typer.echo(
+            "Error: docker support requires the docker extra.\n"
+            "Install with: pip install logwise[docker]",
+            err=True,
+        )
+        raise typer.Exit(code=2)
+    return DockerSource(container)
+
+
+def _pick_source(
+    file: Path | None, docker: str | None, pipe_tmp: Path | None
+) -> LogSource:
     if file is not None:
         if not file.is_file():
             typer.echo(f"Error: file not found: {file}", err=True)
@@ -166,10 +181,12 @@ def _pick_source(file: Path | None, pipe_tmp: Path | None) -> LogSource:
             typer.echo(f"Error: file not readable: {file}", err=True)
             raise typer.Exit(code=2)
         return FileSource(file)
+    if docker is not None:
+        return _make_docker_source(docker)
     if pipe_tmp is not None:
         return FileSource(pipe_tmp)
     typer.echo(
-        "Error: no source. Pass --file PATH or pipe stdin "
+        "Error: no source. Pass --file PATH, --docker CONTAINER, or pipe stdin "
         "(e.g. `kubectl logs ... | logwise`).",
         err=True,
     )
@@ -191,6 +208,10 @@ def main(
     file: Annotated[
         Path | None,
         typer.Option("--file", "-f", help="Path to the log file to tail."),
+    ] = None,
+    docker: Annotated[
+        str | None,
+        typer.Option("--docker", "-d", help="Docker container name or ID to tail."),
     ] = None,
     max_lines: Annotated[
         int,
@@ -224,8 +245,8 @@ def main(
             format="%(asctime)s %(levelname)s %(name)s %(message)s",
         )
 
-    pipe_tmp = _drain_pipe_to_tempfile() if file is None else None
-    source = _pick_source(file, pipe_tmp)
+    pipe_tmp = _drain_pipe_to_tempfile() if file is None and docker is None else None
+    source = _pick_source(file, docker, pipe_tmp)
     parser = _pick_parser(format_)
     LogWiseApp(source=source, parser=parser, max_lines=max_lines).run()
 
